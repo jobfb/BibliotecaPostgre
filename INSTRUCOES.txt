@@ -1,0 +1,69 @@
+SISTEMA DE GERENCIAMENTO DE BIBLIOTECA - INSTRUÇÕES DE EXECUÇÃO
+==================================================================
+
+PRÉ-REQUISITOS
+- Java JDK 17 ou superior instalado (java -version / javac -version)
+- PostgreSQL instalado e em execução
+
+1) CRIAR O BANCO DE DADOS
+   Com o PostgreSQL em execução, crie o banco (ajuste usuário/senha se
+   necessário -- o padrão esperado pela aplicação é usuário "postgres",
+   senha "123456", banco "biblioteca"):
+
+   psql -U postgres -c "CREATE DATABASE biblioteca;"
+
+2) CRIAR AS TABELAS E POPULAR COM DADOS INICIAIS
+   psql -U postgres -d biblioteca -f sql/01_schema.sql
+   psql -U postgres -d biblioteca -f sql/02_dados_iniciais.sql
+
+   (no Windows, rode os mesmos comandos no prompt/psql, ou abra os
+   arquivos .sql no pgAdmin e execute o conteúdo)
+
+3) SE SUA SENHA/USUÁRIO DO POSTGRES FOR DIFERENTE
+   Edite o arquivo:
+     src/database/ConnectionFactory.java
+   e ajuste URL_PADRAO, USER_PADRAO e SENHA_PADRAO.
+   (Alternativamente, defina as variáveis de ambiente DB_URL, DB_USER
+   e DB_PASSWORD antes de rodar a aplicação -- elas têm prioridade
+   sobre os valores padrão do código.)
+
+4) COMPILAR
+   No terminal, dentro da pasta do projeto:
+
+   Linux/Mac:
+     find src -name "*.java" > sources.txt
+     javac -encoding UTF-8 -d bin -cp lib/postgresql.jar @sources.txt
+
+   Windows (cmd):
+     dir /s /b src\*.java > sources.txt
+     javac -encoding UTF-8 -d bin -cp lib\postgresql.jar @sources.txt
+
+5) EXECUTAR
+   Linux/Mac:
+     java -Dfile.encoding=UTF-8 -cp bin:lib/postgresql.jar Main
+
+   Windows (cmd):
+     java -Dfile.encoding=UTF-8 -cp bin;lib\postgresql.jar Main
+
+   Também é possível rodar em uma IDE (VS Code, IntelliJ, Eclipse):
+   basta garantir que lib/postgresql.jar esteja no classpath do projeto
+   e executar a classe Main.
+
+6) TESTE RÁPIDO DE CONEXÃO (opcional)
+   java -Dfile.encoding=UTF-8 -cp bin:lib/postgresql.jar TesteConexao
+
+ESTRUTURA DO PROJETO
+   src/model/      -> classes de entidade (POJOs)
+   src/dao/        -> acesso a dados (CRUD + processo de negócio de Empréstimo + Relatórios)
+   src/menu/       -> interface em modo texto (menus de console)
+   src/database/   -> fábrica de conexão JDBC
+   sql/            -> scripts de criação (01_schema.sql) e dados iniciais (02_dados_iniciais.sql)
+   lib/            -> driver JDBC do PostgreSQL (postgresql.jar)
+
+OBSERVAÇÃO IMPORTANTE SOBRE O MODELO DE DADOS
+   O campo "data_devolucao_efetiva" foi acrescentado à tabela emprestimo
+   (não estava no dicionário de dados original) para permitir registrar
+   a data REAL de devolução -- sem ele não é possível implementar o
+   processo de negócio "Efetuar devolução" nem calcular atraso de forma
+   correta. Se for atualizar o documento de texto entregue, inclua esse
+   campo no dicionário de dados da tabela Emprestimo.
